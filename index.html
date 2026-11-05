@@ -118,8 +118,10 @@
     const REPS = 8;
     strip.innerHTML = Array.from({ length: 10 * REPS }, (_, i) => "<span>" + (i % 10) + "</span>").join("");
 
+    const THROTTLE_MS = 3000;
     let inflight = false;
     let loadedOnce = false;
+    let lastFetchAt = 0;
     let reelIndex = 0;
     let lastText = "";
 
@@ -179,8 +181,11 @@
     }
 
     async function refresh(fromLoad) {
+      const now = Date.now();
       if (inflight) return;
+      if (!fromLoad && now - lastFetchAt < THROTTLE_MS) return;
       inflight = true;
+      lastFetchAt = now;
       if (fromLoad || !lastText) {
         document.body.style.background = "#1b1d22";
         hideNumber();
@@ -206,6 +211,7 @@
 
     document.body.addEventListener("click", function () {
       if (!loadedOnce || inflight) return;
+      if (Date.now() - lastFetchAt < THROTTLE_MS) return;
       refresh(false);
     });
     refresh(true);
