@@ -3,38 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>收蛋人</title>
+  <title>收蛋人 · 十年期国债ETF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
+    :root {
+      --ink: rgba(255, 248, 246, 0.96);
+      --mute: rgba(255, 236, 232, 0.62);
+      --line: rgba(255, 220, 210, 0.35);
+    }
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
       height: 100%;
     }
     body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
       min-height: 100vh;
       cursor: pointer;
       user-select: none;
-      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-family: Outfit, "PingFang SC", "Microsoft YaHei", sans-serif;
       background: #1b1d22;
-      color: rgba(255, 255, 255, 0.94);
-      transition: background 0.55s ease;
+      color: var(--ink);
+      transition: background 0.7s ease, color 0.7s ease;
     }
-    .stage {
-      position: relative;
-      min-height: 1.2em;
+    body.up {
+      color: var(--ink);
+    }
+    body.down, body.flat {
+      color: #3d4a42;
+    }
+    body.down { --mute: rgba(61, 74, 66, 0.55); --line: rgba(61, 74, 66, 0.16); }
+    body.flat { --mute: rgba(90, 84, 78, 0.55); --line: rgba(90, 84, 78, 0.16); }
+    .grain {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      opacity: 0.07;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+    }
+    .shell {
+      min-height: 100vh;
       display: flex;
+      flex-direction: column;
+      padding: 28px 28px 0;
+    }
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      margin: 0;
+      font-family: "Instrument Serif", serif;
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+    }
+    .meta {
+      margin: 0;
+      text-align: right;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--mute);
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 24px 0 12px;
     }
     .loader {
       width: 78px;
       height: 78px;
       position: relative;
     }
-    .loader.hidden { display: none; }
+    .loader.hidden, .hero.hidden, .calm.hidden, .chart-wrap.hidden { display: none; }
     .ring {
       position: absolute;
       inset: 0;
@@ -45,14 +93,12 @@
       border-top-color: #fff;
       border-right-color: rgba(255, 255, 255, 0.18);
       animation: spin 0.85s linear infinite;
-      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.45));
     }
     .ring-b {
       inset: 12px;
       border-bottom-color: #ff6b6b;
       border-left-color: rgba(255, 107, 107, 0.2);
       animation: spin 1.35s linear infinite reverse;
-      filter: drop-shadow(0 0 8px rgba(255, 90, 90, 0.4));
     }
     .core {
       position: absolute;
@@ -67,17 +113,40 @@
       0%, 100% { transform: scale(0.82); opacity: 0.75; }
       50% { transform: scale(1); opacity: 1; }
     }
+    .hero {
+      text-align: center;
+    }
+    .metric {
+      margin: 0 0 10px;
+      font-size: 13px;
+      letter-spacing: 0.38em;
+      text-transform: uppercase;
+      color: var(--mute);
+    }
     .pct {
       display: flex;
-      align-items: center;
-      font-size: clamp(40px, 9vw, 72px);
-      font-weight: 560;
+      align-items: baseline;
+      justify-content: center;
+      font-family: "Instrument Serif", serif;
+      font-size: clamp(64px, 16vw, 128px);
+      font-weight: 400;
       font-variant-numeric: tabular-nums;
-      letter-spacing: 0.02em;
-      line-height: 1;
-      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.12);
+      letter-spacing: 0.01em;
+      line-height: 0.92;
+      text-shadow: 0 10px 40px rgba(80, 0, 0, 0.18);
     }
-    .pct.hidden { display: none; }
+    .sign {
+      font-size: 0.42em;
+      margin-right: 0.12em;
+      opacity: 0.82;
+      transform: translateY(-0.18em);
+    }
+    .unit {
+      font-size: 0.38em;
+      margin-left: 0.08em;
+      opacity: 0.72;
+      transform: translateY(-0.12em);
+    }
     .reel {
       display: inline-block;
       height: 1em;
@@ -93,27 +162,102 @@
       height: 1em;
       line-height: 1;
     }
+    .hint {
+      margin: 18px 0 0;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      color: var(--mute);
+    }
+    .calm {
+      margin: 0;
+      font-family: "Instrument Serif", serif;
+      font-size: clamp(28px, 6vw, 44px);
+      font-style: italic;
+      letter-spacing: 0.08em;
+    }
+    .chart-wrap {
+      position: relative;
+      height: min(32vh, 260px);
+      margin: 0 -28px;
+    }
+    .chart-wrap svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .chart-cap {
+      position: absolute;
+      left: 28px;
+      top: 4px;
+      margin: 0;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--mute);
+    }
+    .line {
+      fill: none;
+      stroke: rgba(255, 244, 236, 0.95);
+      stroke-width: 2.2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      filter: drop-shadow(0 8px 16px rgba(255, 210, 180, 0.28));
+    }
+    .area { fill: url(#riseFill); }
+    .dot {
+      fill: #fff7f0;
+      stroke: rgba(255, 220, 200, 0.9);
+      stroke-width: 2;
+    }
+    .axis {
+      fill: var(--mute);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      font-family: Outfit, sans-serif;
+    }
   </style>
 </head>
 <body>
-  <div class="stage">
-    <div class="loader" id="loader">
-      <div class="ring ring-a"></div>
-      <div class="ring ring-b"></div>
-      <div class="core"></div>
-    </div>
-    <div class="pct hidden" id="pct">
-      <span id="prefix"></span>
-      <span class="reel"><span class="strip" id="strip"></span></span>
+  <div class="grain"></div>
+  <div class="shell">
+    <header>
+      <p class="brand">收蛋人</p>
+      <p class="meta">十年期国债 ETF<br />511260.SH</p>
+    </header>
+    <main>
+      <div class="loader" id="loader">
+        <div class="ring ring-a"></div>
+        <div class="ring ring-b"></div>
+        <div class="core"></div>
+      </div>
+      <div class="hero hidden" id="hero">
+        <p class="metric">今日涨幅</p>
+        <div class="pct" id="pct">
+          <span class="sign">+</span>
+          <span id="prefix"></span>
+          <span class="reel"><span class="strip" id="strip"></span></span>
+          <span class="unit">%</span>
+        </div>
+        <p class="hint" id="hint"></p>
+      </div>
+      <p class="calm hidden" id="calm">今天没下蛋</p>
+    </main>
+    <div class="chart-wrap hidden" id="chartWrap">
+      <p class="chart-cap">近日收盘曲线</p>
+      <svg id="chart" preserveAspectRatio="none"></svg>
     </div>
   </div>
   <script>
     const API = "https://tonghua.jasonbai.dpdns.org";
     const CODE = "511260.SH";
     const loader = document.getElementById("loader");
-    const pctEl = document.getElementById("pct");
+    const hero = document.getElementById("hero");
     const prefixEl = document.getElementById("prefix");
     const strip = document.getElementById("strip");
+    const hint = document.getElementById("hint");
+    const calm = document.getElementById("calm");
+    const chartWrap = document.getElementById("chartWrap");
+    const chart = document.getElementById("chart");
 
     const REPS = 8;
     strip.innerHTML = Array.from({ length: 10 * REPS }, (_, i) => "<span>" + (i % 10) + "</span>").join("");
@@ -124,6 +268,7 @@
     let lastFetchAt = 0;
     let reelIndex = 0;
     let lastText = "";
+    let lastBars = null;
 
     function mix(a, b, t) {
       t = Math.min(1, Math.max(0, t));
@@ -134,6 +279,17 @@
     }
     function digitH() {
       return strip.firstElementChild.getBoundingClientRect().height || 1;
+    }
+    function fmtDate(ms) {
+      const d = new Date(ms);
+      const parts = new Intl.DateTimeFormat("zh-CN", {
+        timeZone: "Asia/Shanghai",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(d);
+      const map = {};
+      parts.forEach(function (p) { map[p.type] = p.value; });
+      return map.month + "/" + map.day;
     }
 
     function rollLast(digit) {
@@ -147,8 +303,9 @@
       strip.style.transform = "translateY(" + (-reelIndex * h) + "px)";
     }
 
-    function hideNumber() {
-      pctEl.classList.add("hidden");
+    function hideUp() {
+      hero.classList.add("hidden");
+      chartWrap.classList.add("hidden");
       prefixEl.textContent = "";
       lastText = "";
     }
@@ -156,28 +313,92 @@
     function showNumber(text) {
       const last = Number(text.slice(-1));
       prefixEl.textContent = text.slice(0, -1);
-      pctEl.classList.remove("hidden");
-      requestAnimationFrame(() => rollLast(last));
+      hero.classList.remove("hidden");
+      requestAnimationFrame(function () { rollLast(last); });
       lastText = text;
     }
 
-    function paint(ratio, fromLoad) {
+    function drawChart(bars) {
+      if (!bars || bars.length < 2) {
+        chartWrap.classList.add("hidden");
+        return;
+      }
+      chartWrap.classList.remove("hidden");
+      const w = Math.max(chartWrap.clientWidth || 0, 320);
+      const h = Math.max(chartWrap.clientHeight || 0, 160);
+      const pad = { l: 28, r: 36, t: 36, b: 36 };
+      const closes = bars.map(function (b) { return Number(b.close_price); });
+      let min = Math.min.apply(null, closes);
+      let max = Math.max.apply(null, closes);
+      const span = max - min || 1;
+      min -= span * 0.08;
+      max += span * 0.12;
+      const range = max - min;
+      const n = closes.length;
+      function x(i) { return pad.l + (w - pad.l - pad.r) * i / (n - 1); }
+      function y(v) { return pad.t + (h - pad.t - pad.b) * (1 - (v - min) / range); }
+      let line = "";
+      closes.forEach(function (v, i) {
+        line += (i ? " L" : "M") + x(i).toFixed(2) + " " + y(v).toFixed(2);
+      });
+      const area = line +
+        " L" + x(n - 1).toFixed(2) + " " + (h - 8) +
+        " L" + x(0).toFixed(2) + " " + (h - 8) + " Z";
+      const lastX = x(n - 1);
+      const lastY = y(closes[n - 1]);
+      chart.setAttribute("viewBox", "0 0 " + w + " " + h);
+      chart.innerHTML =
+        '<defs>' +
+          '<linearGradient id="riseFill" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="rgba(255,214,196,0.42)"/>' +
+            '<stop offset="100%" stop-color="rgba(255,180,160,0)"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<path class="area" d="' + area + '"></path>' +
+        '<path class="line" d="' + line + '"></path>' +
+        '<circle class="dot" cx="' + lastX.toFixed(2) + '" cy="' + lastY.toFixed(2) + '" r="4.5"></circle>' +
+        '<text class="axis" x="' + pad.l + '" y="' + (h - 12) + '">' + fmtDate(bars[0].date_ms) + '</text>' +
+        '<text class="axis" x="' + (w - pad.r) + '" y="' + (h - 12) + '" text-anchor="end">' + fmtDate(bars[n - 1].date_ms) + '</text>';
+    }
+
+    function paint(ratio, row, bars) {
       const downBg = [196, 222, 204];
       const flatBg = [232, 228, 224];
       const upMin = [196, 58, 56];
       const upMax = [138, 28, 32];
 
       loader.classList.add("hidden");
+      bodyMode("");
 
       if (ratio == null || Number.isNaN(ratio) || ratio <= 0) {
         document.body.style.background = rgb(ratio != null && ratio <= 0 ? downBg : flatBg);
-        hideNumber();
+        document.body.classList.add(ratio != null && ratio <= 0 ? "down" : "flat");
+        hideUp();
+        calm.classList.remove("hidden");
+        calm.textContent = ratio != null && ratio <= 0 ? "今天没下蛋" : "暂无行情";
         return;
       }
 
+      document.body.classList.add("up");
+      calm.classList.add("hidden");
       const t = Math.min(ratio / 0.8, 1);
       document.body.style.background = rgb(mix(upMin, upMax, t));
       showNumber(ratio.toFixed(2));
+      const last = row && row.last_price != null ? Number(row.last_price).toFixed(3) : "";
+      hint.textContent = last ? ("最新价  " + last) : "";
+      lastBars = bars;
+      drawChart(bars);
+    }
+
+    function bodyMode(mode) {
+      document.body.classList.remove("up", "down", "flat");
+      if (mode) document.body.classList.add(mode);
+    }
+
+    async function fetchJson(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
     }
 
     async function refresh(fromLoad) {
@@ -188,27 +409,39 @@
       lastFetchAt = now;
       if (fromLoad || !lastText) {
         document.body.style.background = "#1b1d22";
-        hideNumber();
+        bodyMode("");
+        hideUp();
+        calm.classList.add("hidden");
         loader.classList.remove("hidden");
       }
       try {
-        const res = await fetch(
-          API + "/api/fund/market/snapshot?thscode=" + encodeURIComponent(CODE)
-        );
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const json = await res.json();
-        if (json.code !== 0) throw new Error(json.message || "业务错误");
-        const row = (json.data && json.data.item && json.data.item[0]) || null;
+        const end = Date.now();
+        const start = end - 45 * 24 * 60 * 60 * 1000;
+        const pair = await Promise.all([
+          fetchJson(API + "/api/fund/market/snapshot?thscode=" + encodeURIComponent(CODE)),
+          fetchJson(
+            API + "/api/fund/market/historical?thscode=" + encodeURIComponent(CODE) +
+            "&interval=1d&start=" + start + "&end=" + end
+          )
+        ]);
+        const snap = pair[0];
+        const hist = pair[1];
+        if (snap.code !== 0) throw new Error(snap.message || "业务错误");
+        const row = (snap.data && snap.data.item && snap.data.item[0]) || null;
         const ratio = row ? Number(row.price_change_ratio_pct) : null;
-        paint(ratio, fromLoad);
+        const bars = (hist && hist.code === 0 && hist.data && hist.data.item) || [];
+        paint(ratio, row, bars);
       } catch (e) {
-        paint(null, fromLoad);
+        paint(null, null, null);
       } finally {
         inflight = false;
         loadedOnce = true;
       }
     }
 
+    window.addEventListener("resize", function () {
+      if (document.body.classList.contains("up") && lastBars) drawChart(lastBars);
+    });
     document.body.addEventListener("click", function () {
       if (!loadedOnce || inflight) return;
       if (Date.now() - lastFetchAt < THROTTLE_MS) return;
